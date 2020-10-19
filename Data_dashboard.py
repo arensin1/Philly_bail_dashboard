@@ -11,9 +11,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output
 import plotly.express as px
-from pie_graph import Pie_chart
-from bail_age  import Bail_age
-from Bail_time import Bail_day
+from helper import pie_graph, bail_age, Bail_time
 
 
 philly_data = pd.read_csv('parsed1.csv')
@@ -36,9 +34,9 @@ big_df = pd.DataFrame({'Zip':zip, 'Attorney': attorney, 'Age':age,'Arrest Date':
                        'Bail Date': bail_dt, 'Preliminary Date': prelim_date, 'Preliminary Time': prelim_time})
 
 
-fig_type = Pie_chart(big_df)
-df_debt = Bail_age(big_df)
-fig_overall,fig_time = Bail_day(big_df)
+fig_type = pie_graph.Pie_chart(big_df)
+df_debt = bail_age.Bail_age(big_df)
+fig_overall,fig_time = Bail_time.Bail_day(big_df)
 
 app = dash.Dash()
 
