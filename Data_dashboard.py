@@ -5,29 +5,26 @@
 
 
 import pandas as pd
-from collections import Counter
+import plotly.graph_objects as go
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
-import matplotlib.pyplot as plt
-import numpy as np
-import math
-import statistics
-import datetime
+from dash.dependencies import Input, Output
 import plotly.express as px
+from pie_graph import Pie_chart
+from bail_age  import Bail_age
+from Bail_time import Bail_day
 
 
-philly_data = pd.read_csv('all.csv')
+philly_data = pd.read_csv('parsed1.csv')
 zip_code = philly_data['zip']
 attorney = philly_data['attorney']
-offenses = philly_data['offenses']
-offense_date = philly_data['offense_date']
+#offenses = philly_data['offenses']
+#offense_date = philly_data['offense_date']
 age = philly_data['dob']
-age.dropna()
 arrest_dt = philly_data['arrest_dt']
-case_stat = philly_data['case_status']
+#case_stat = philly_data['case_status']
 bail_amt = philly_data['bail_amount']
-bail_amt.dropna()
 bail_type = philly_data['bail_type']
 bail_paid = philly_data['bail_paid']
 bail_dt = philly_data['bail_date']
@@ -35,197 +32,139 @@ prelim_date = philly_data['prelim_hearing_dt']
 prelim_time = philly_data['prelim_hearing_time']
 
 
-# In[22]:
+big_df = pd.DataFrame({'Zip':zip, 'Attorney': attorney, 'Age':age,'Arrest Date':arrest_dt,'Bail Amount Issued': bail_amt, 'Type of Bail': bail_type, 'Bail Paid': bail_paid,
+                       'Bail Date': bail_dt, 'Preliminary Date': prelim_date, 'Preliminary Time': prelim_time})
 
 
-type_size = []
-types = []
-amount_monetary = []
-amount_ror = []
-amount_unsec = []
-amount_nonmon = []
-
-bail_type_count = Counter(bail_type)
-for bail_tup in bail_type_count.most_common():
-    if bail_tup[0] != 'Nominal' and type(bail_tup[0]) != float:
-        types.append(bail_tup[0])
-        type_size.append(bail_tup[1])
-
-def calculateAge(birthDate):
-    days_in_year = 365.2425
-    age = int((datetime.date.today() - birthDate).days / days_in_year)
-    if age < 0:
-        age = age + 100
-    return age
-i = 0
-for bail in bail_amt:
-    if bail_type[i] == 'Monetary':
-        amount_monetary.append(bail)
-    if bail_type[i] == 'ROR':
-        amount_ror.append(bail)
-    if bail_type[i] == "Unsecured":
-        amount_unsec.append(bail)
-    if bail_type[i] == 'Nonmonetary':
-        amount_nonmon.append(bail)
-    i += 1
-amount_avgs = [statistics.mean(amount_monetary),statistics.mean(amount_ror),statistics.mean(amount_unsec),statistics.mean(amount_nonmon)]
-avgs = np.round(amount_avgs, 2)
-colors = ['powderblue', 'coral', 'rosybrown', 'palegreen']
-df_1 = pd.DataFrame({'Type_Size':type_size, 'Types of Bail': types, "Average Amount Issued": avgs})
-fig1 = px.pie(df_1, values="Type_Size", names="Types of Bail", color_discrete_sequence = colors,title='Types of Bail Issued', hover_data = ["Average Amount Issued"])
-
-
-
-
-# In[51]:
-
-
-morning_type =[]
-afternoon_type = []
-evening_type = []
-morning_amt =[]
-evening_amt =[]
-afternoon_amt= []
-i = 0
-for time in prelim_time:
-    parse_time_m = time.split()
-    parse_time_c = time.split(':')
-    if type(bail_type[i]) == str:
-        if parse_time_m[1] == 'AM':
-            if int(parse_time_c[0]) >3:
-                morning_type.append(bail_type[i])
-                morning_amt.append(bail_amt[i])
-            else:
-                evening_type.append(bail_type[i])
-                evening_amt.append(bail_amt[i])
-        else:
-            if int(parse_time_c[0]) < 6:
-                afternoon_type.append(bail_type[i])
-                afternoon_amt.append(bail_amt[i])
-            else:
-                evening_type.append(bail_type[i])
-                evening_amt.append(bail_amt[i])
-    i += 1
-
-morning_tct = Counter(morning_type).most_common()
-value_morn = []
-type_morning = []
-time_morn = []
-for i in morning_tct:
-    type_morning.append(i[0])
-    value_morn.append(i[1])
-    time_morn.append("Morning")
-
-evening_tct = Counter(evening_type).most_common()
-value_evening = []
-type_evening = []
-time_evening = []
-for i in evening_tct:
-    type_evening.append(i[0])
-    value_evening.append(i[1])
-    time_evening.append("Evening")
-
-afternoon_tct = Counter(afternoon_type).most_common()
-value_aft = []
-type_aft = []
-time_aft = []
-for i in afternoon_tct:
-    type_aft.append(i[0])
-    value_aft.append(i[1])
-    time_aft.append("Afternoon")
-
-time = time_morn
-for time_ in time_evening:
-    time.append(time_)
-for time_ in time_aft:
-    time.append(time_)
-type_bail  = type_morning
-for type_ in type_evening:
-    type_bail.append(type_)
-for type_ in type_aft:
-    type_bail.append(type_)
-
-values = value_morn
-
-for value in value_evening:
-    values.append(value)
-for value in value_aft:
-    values.append(value)
-df = pd.DataFrame({"Time":time, 'Type': type_bail, 'Type Issued':values})
-fig_overall = px.bar(df, x = 'Type', y = 'Type Issued', color = 'Time', barmode='group',title='Types of Bail Issued Throughout the Day')
-
-
-time = ['Morning', 'Afternoon','Evening']
-avg_amount = [statistics.mean(morning_amt), statistics.mean(afternoon_amt), statistics.mean(evening_amt)]
-df_time_type = pd.DataFrame({'Time':time, 'Average Amount Issued':avg_amount})
-fig_time = px.bar(df_time_type, x= "Time", y="Average Amount Issued",color_discrete_sequence =['lightpink']*len(df_time_type), title='Amount of Bail Issued Throughout the Day')
-
-debt = []
-types = []
-
-age_int = []
-i = 0
-
-for birth in age:
-    if type(birth) != float:
-        date_time = datetime.datetime.strptime(birth, '%m/%d/%y').date()
-        num_age = calculateAge(date_time)
-        if type(bail_type[i]) != float:
-            age_int.append(num_age)
-            types.append(bail_type[i])
-            debt.append(bail_amt[i] - bail_paid[i])
-
-    i += 1
-df_debt = pd.DataFrame({"Amount Bail Owed": debt, "Age": age_int, "Type of Bail": types})
-colors = ['firebrick', 'salmon', 'rosybrown', 'peru']
-fig_debt = px.scatter(df_debt, x="Age", y="Amount Bail Owed", color = "Type of Bail", log_y = True, title='Amount of Bail Owed')
-
-# In[ ]:
-
+fig_type = Pie_chart(big_df)
+df_debt = Bail_age(big_df)
+fig_overall,fig_time = Bail_day(big_df)
 
 app = dash.Dash()
 
-colors = {'background':'#111111','text':'#7FDBFF'}
+colors = {'background':'#595354','text':'#F6F6F6'}
+fig_type.update_layout(
+    plot_bgcolor = colors['background'],
+    paper_bgcolor = colors['background'],
+    font_color = colors['text'],
+)
+fig_overall.update_layout(
+    plot_bgcolor = colors['background'],
+    paper_bgcolor = colors['background'],
+    font_color = colors['text'],
+)
+fig_time.update_layout(
+    plot_bgcolor = colors['background'],
+    paper_bgcolor = colors['background'],
+    font_color = colors['text'],
+)
+intro = '''
+### Philadephia Bail Fund
 
-app.layout = html.Div(children=[
+Research shows that just three days in jail makes people more likely to lose their jobs and housing, be separated from their families, and commit crimes in the future.
+The Philadelphia Bail Fund pays bail at the earliest possible moment for people who are indigent and cannot afford bail — ideally before they are transferred from their holding cell to jail.
+The goal of the Philadelphia Bail Fund is to eliminate money bail in Philadelphia.
+
+**Donate Here**: https://www.phillybailfund.org/
+
+'''
+markdown_bailtype = '''
+### Types of Bail
+**ROR (Release on Recognizance)**
+This type of bail is the least restrictive. Release from jail only requires the defendant’s written agreement or promise to return to court and otherwise comply with any conditions of bail.
+
+**Conditional Release (Nonmonetary Bail)**
+When the court orders conditional release, the defendant is required to comply with specific conditions the court sees fit, i.e., drug test, reporting to probation office, electronic monitoring.
+
+**Unsecured Bail – Monetary Amount Not Required**
+A defendant in a criminal case may be released upon an agreement to be liable for a specific amount of money for failing to appear or otherwise failing to comply with the conditions of bail. In the event of a failure to appear, the defendant would be required to pay the agreed upon amount.
+
+**Monetary Bail - Monetary Amount Required**
+Defendant must make monetary payment to be released.
+'''
+
+app.layout = html.Div(style={'backgroundColor': colors['background']}, children=[
+    html.H1(children='Data Visualization of Bail in Philadephia',
+        style = {'textAlign': 'center', 'color': colors['text']}
+    ),
+    html.H3(children='Hover over the Data!',
+        style = {'textAlign': 'center', 'color': colors['text']}
+    ),
+    html.Div([
+        dcc.Markdown(children = intro,
+        style = {'color': colors['text']}),
+        html.Div([
+            dcc.Graph(
+                    id ='debt_figure',
+            ),
+            dcc.Checklist(
+                id = 'bail_type',
+                options=[
+                    {'label': 'Monetary', 'value': 'Monetary'},
+                    {'label': 'ROR', 'value': 'ROR'},
+                    {'label': 'Unsecured', 'value': 'Unsecured'},
+                    {'label': 'Nonmonetary', 'value': 'Nonmonetary'},
+                ],
+                value = ['Monetary', 'ROR', 'Unsecured', 'Nonmonetary']
+            ),
+        ],style ={'width': '70%', 'display':'inline-block'}),
+        html.Div([
+            dcc.Markdown(children = markdown_bailtype,
+            style = {'color': colors['text']})
+
+        ],style ={'width': '30%', 'display':'inline-block'}),
+
+    ]),
     html.Div([
         html.Div([
-            html.H1(children='Data Visualization of Philly Bail'),
-            html.Div(children='''Data on Type of Bail Amount Issued'''),
-
             dcc.Graph(
                 id ='Bail-Types',
-                figure=fig1
+                figure=fig_type
             ),
-    ], className='six columns'),
+        ], style ={'width': '49%', 'display':'inline-block'}),
+        html.Div([
+            dcc.Graph(
+                id ='overall',
+                figure=fig_overall
+            ),
+        ], style ={'width': '49%', 'display':'inline-block'}),
+    ]),
     html.Div([
-
-        dcc.Graph(
-            id ='overall',
-            figure=fig_overall
-        ),
-        ], className='six columns'),
-    ],className = 'row'),
-    html.Div([
-
-        html.Div(children='''Data on Bail Amount Issued'''),
         dcc.Graph(
                 id ='time',
                 figure=fig_time
         ),
-    ],className = 'row'),
-    html.Div([
-
-        dcc.Graph(
-                id ='debt',
-                figure=fig_debt
-        ),
-    ],className = 'row'),
+    ]),
 ])
 
+@app.callback(
+    Output('debt_figure', 'figure'),
+    [Input('bail_type', 'value')])
 
+def update_figure(selected_type):
+    fig_debt = go.Figure()
+    for _type in selected_type:
+        filtered_df= df_debt[df_debt['Type of Bail'] == _type]
+        fig_debt.add_trace(go.Scatter(x=filtered_df['Age'],
+                                    y=filtered_df['Amount Bail Owed'],
+                                    mode='markers',text=filtered_df['Type of Bail'],
+                                    name = _type, marker_color = filtered_df['Colors']))
+    fig_debt.update_xaxes(
+        title_text = "Age",
+        title_font = {"size": 20},
+        title_standoff = 25)
 
-
+    fig_debt.update_yaxes(
+        title_text = "Bail Owed",
+        title_standoff = 25)
+    fig_debt.update_layout(
+        title = 'Amount of Bail Debt',
+        plot_bgcolor = colors['background'],
+        paper_bgcolor = colors['background'],
+        font_color = colors['text'],
+    )
+    fig_debt.update_layout(transition_duration =500)
+    return fig_debt
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(debug=True)
