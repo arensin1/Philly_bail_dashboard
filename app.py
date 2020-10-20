@@ -147,7 +147,7 @@ def update_figure(selected_type):
         filtered_df= df_debt[df_debt['Type of Bail'] == _type]
         fig_debt.add_trace(go.Scatter(x=filtered_df['Age'],
                                     y=filtered_df['Amount Bail Owed'],
-                                    mode='markers',text=filtered_df['Type of Bail'],
+                                    mode='markers',
                                     name = _type, marker_color = filtered_df['Colors']))
     fig_debt.update_xaxes(
         title_text = "Age",
