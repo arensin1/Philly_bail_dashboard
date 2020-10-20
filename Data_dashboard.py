@@ -40,6 +40,8 @@ fig_overall,fig_time = Bail_time.Bail_day(big_df)
 
 app = dash.Dash()
 
+server = app.server
+
 colors = {'background':'#595354','text':'#F6F6F6'}
 fig_type.update_layout(
     plot_bgcolor = colors['background'],
