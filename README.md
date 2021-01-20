@@ -5,3 +5,4 @@
 
 # How To Use
 <p>One should be able to clone repo. After that, you would just have to run Data.dashboard.py and a server should appear giving the user access to the dashboard. </p>
+Here is the link to the finished project https://philly-bail-dashboard.herokuapp.com/
